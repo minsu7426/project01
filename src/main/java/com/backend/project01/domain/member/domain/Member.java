@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @Getter
@@ -29,5 +30,8 @@ public class Member {
     @Enumerated(EnumType.STRING)
     private RoleType roleType;
 
-
+    public Member encode(final PasswordEncoder passwordEncoder) {
+        this.password = passwordEncoder.encode(password);
+        return this;
+    }
 }

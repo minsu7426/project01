@@ -1,6 +1,10 @@
 package com.backend.project01.global.config;
 
 import com.backend.project01.global.jwt.JwtUsernamePasswordAuthenticationFilter;
+import com.backend.project01.global.jwt.MemberDetailService;
+import com.backend.project01.global.jwt.handler.LoginFailureHandler;
+import com.backend.project01.global.jwt.handler.LoginSuccessHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,15 +13,17 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.HttpBasicConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 
-@RequiredArgsConstructor
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final ObjectMapper objectMapper;
+    private final MemberDetailService memberDetailService;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -44,15 +50,28 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(memberDetailService);
         provider.setPasswordEncoder(passwordEncoder());
         return new ProviderManager(provider);
     }
 
     @Bean
     public JwtUsernamePasswordAuthenticationFilter jwtUsernamePasswordAuthenticationFilter() {
-        JwtUsernamePasswordAuthenticationFilter filter = new JwtUsernamePasswordAuthenticationFilter();
+        JwtUsernamePasswordAuthenticationFilter filter = new JwtUsernamePasswordAuthenticationFilter(objectMapper);
         filter.setAuthenticationManager(authenticationManager());
+        filter.setAuthenticationSuccessHandler(loginSuccessHandler());
+        filter.setAuthenticationFailureHandler(loginFailureHandler());
         return filter;
+    }
+
+    @Bean
+    public LoginSuccessHandler loginSuccessHandler() {
+        return new LoginSuccessHandler();
+    }
+
+    @Bean
+    public LoginFailureHandler loginFailureHandler() {
+        return new LoginFailureHandler();
     }
 
     @Bean
@@ -61,3 +80,4 @@ public class SecurityConfig {
     }
 
 }
+
