@@ -1,4 +1,4 @@
-package com.backend.project01.global.jwt.handler;
+package com.backend.project01.global.config.security.handler;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

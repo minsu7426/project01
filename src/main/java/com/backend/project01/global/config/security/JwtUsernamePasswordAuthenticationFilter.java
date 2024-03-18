@@ -1,6 +1,5 @@
-package com.backend.project01.global.jwt;
+package com.backend.project01.global.config.security;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

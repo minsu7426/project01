@@ -2,11 +2,13 @@ package com.backend.project01.domain.member.api;
 
 import com.backend.project01.domain.member.application.MemberService;
 import com.backend.project01.domain.member.dto.JoinRequest;
-import com.backend.project01.global.jwt.MemberDetailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 @Slf4j
 @RestController
@@ -15,11 +17,11 @@ import org.springframework.web.bind.annotation.*;
 public class MemberApi {
 
     private final MemberService memberService;
-    private final MemberDetailService memberDetailService;
 
     @GetMapping("/test")
-    public ResponseEntity<String> test() {
+    public ResponseEntity<String> test(Authentication authentication) {
         log.info("/api/v1/member/test 컨트롤러 진입");
+        System.out.println("authoriteis = " + authentication.getAuthorities());
         return ResponseEntity.ok().body("member/test");
     }
 

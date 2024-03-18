@@ -1,9 +1,9 @@
-package com.backend.project01.global.config;
+package com.backend.project01.global.config.security;
 
-import com.backend.project01.global.jwt.JwtUsernamePasswordAuthenticationFilter;
-import com.backend.project01.global.jwt.MemberDetailService;
-import com.backend.project01.global.jwt.handler.LoginFailureHandler;
-import com.backend.project01.global.jwt.handler.LoginSuccessHandler;
+import com.backend.project01.domain.jwt.JwtService;
+import com.backend.project01.domain.member.application.MemberService;
+import com.backend.project01.global.config.security.handler.LoginFailureHandler;
+import com.backend.project01.global.config.security.handler.LoginSuccessHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -14,7 +14,8 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 
@@ -23,7 +24,8 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 public class SecurityConfig {
 
     private final ObjectMapper objectMapper;
-    private final MemberDetailService memberDetailService;
+    private final MemberService memberService;
+    private final JwtService jwtService;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -38,19 +40,20 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/api/v1/member/join", "/api/v1/member/login").permitAll()
-                        .requestMatchers("/api/v1/member/test").permitAll()
+//                        .requestMatchers("/api/v1/member/test").permitAll()
                         .requestMatchers("/api/v1/admin/test").hasRole("ADMIN")
                         .anyRequest().authenticated())
 
                 .addFilterAfter(jwtUsernamePasswordAuthenticationFilter(), LogoutFilter.class)
-
+                //왼쪽은 커스텀한 필터링, 오른쪽에 등록한 필터전에 커스텀필터링이 수행됨
+                .addFilterBefore(jwtAuthenticationFilter(), JwtUsernamePasswordAuthenticationFilter.class)
                 .getOrBuild();
     }
 
     @Bean
     public AuthenticationManager authenticationManager() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(memberDetailService);
+        provider.setUserDetailsService(memberService);
         provider.setPasswordEncoder(passwordEncoder());
         return new ProviderManager(provider);
     }
@@ -65,8 +68,13 @@ public class SecurityConfig {
     }
 
     @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtService);
+    }
+
+    @Bean
     public LoginSuccessHandler loginSuccessHandler() {
-        return new LoginSuccessHandler();
+        return new LoginSuccessHandler(jwtService);
     }
 
     @Bean
@@ -75,8 +83,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
 }
