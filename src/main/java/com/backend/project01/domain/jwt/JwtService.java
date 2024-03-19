@@ -86,28 +86,24 @@ public class JwtService {
                 .compact();
     }
 
-    public String createRefreshToken(String username, String roles) {
+    public String createRefreshToken() {
         log.info("새로운 Refresh Token 생성");
 
-        Claims claims = Jwts.claims();
-        claims.put(USERNAME_CLAIM, username);
-        claims.put(ROLES_CLAIM, roles);
-
-        System.out.println("토큰 만료 시간 = " + refreshTokenValidityInSeconds);
-        System.out.println("토큰 만료 일자 = " + new Date(System.currentTimeMillis() + refreshTokenValidityInSeconds));
-
         return Jwts.builder()
-                .setClaims(claims)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + refreshTokenValidityInSeconds))
                 .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
     }
 
-
     public void sendAccessToken(HttpServletResponse response, String accessToken) {
         response.setStatus(HttpServletResponse.SC_OK);
         response.setHeader(ACCESS_TOKEN_SUBJECT, BEARER + accessToken);
+    }
+
+    public void sendRefreshToken(HttpServletResponse response, String refreshHeader) {
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setHeader(REFRESH_TOKEN_SUBJECT, BEARER + refreshHeader);
     }
 
     public Optional<String> extractAccessToken(HttpServletRequest request) {

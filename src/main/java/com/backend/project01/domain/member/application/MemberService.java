@@ -2,7 +2,9 @@ package com.backend.project01.domain.member.application;
 
 import com.backend.project01.domain.member.domain.Member;
 import com.backend.project01.domain.member.dto.JoinRequest;
+import com.backend.project01.domain.member.error.DuplicateUsernameException;
 import com.backend.project01.domain.member.repository.MemberRepository;
+import com.backend.project01.global.error.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.User;
@@ -13,6 +15,8 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -38,8 +42,20 @@ public class MemberService implements UserDetailsService {
 
     @Transactional
     public void joinProcess(JoinRequest joinRequest) {
+        if(validateDuplicateMember(joinRequest.getUsername())) {
+            throw new DuplicateUsernameException(ErrorCode.DUPLICATE_USERNAME);
+        }
         Member member = joinRequest.toEntity();
         memberRepository.save(member.encode(passwordEncoder));
+    }
+
+    public boolean validateDuplicateMember(String username) {
+        return memberRepository.existsByUsername(username);
+    }
+
+    @Transactional
+    public void updateRefreshToken(String username, String refreshToken) {
+        memberRepository.findByUsername(username).ifPresent(member -> member.updateRefreshToken(refreshToken));
     }
 
 

@@ -1,6 +1,8 @@
 package com.backend.project01.global.config.security.handler;
 
 import com.backend.project01.domain.jwt.JwtService;
+import com.backend.project01.domain.member.application.MemberService;
+import com.backend.project01.domain.member.repository.MemberRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,22 +25,27 @@ import java.util.stream.Collectors;
 public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtService jwtService;
+    private final MemberService memberService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        log.info("LoginSuccessHandler 진입");
+        log.debug("LoginSuccessHandler 진입");
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String username = userDetails.getUsername();
 
         String name = authentication.getName();
-        System.out.println("name1 = " + name);
 
         Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
         String roles = authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
+
         String accessToken = jwtService.createAccessToken(username, roles);
+        String refreshToken = jwtService.createRefreshToken();
 
         jwtService.sendAccessToken(response, accessToken);
+        jwtService.sendRefreshToken(response, refreshToken);
+
+        memberService.updateRefreshToken(username, refreshToken);
     }
 
 }

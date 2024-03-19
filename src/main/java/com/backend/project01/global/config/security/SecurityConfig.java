@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/api/v1/member/join", "/api/v1/member/login").permitAll()
 //                        .requestMatchers("/api/v1/member/test").permitAll()
+                        .requestMatchers("/api/jwt/valid").permitAll()
                         .requestMatchers("/api/v1/admin/test").hasRole("ADMIN")
                         .anyRequest().authenticated())
 
@@ -74,7 +75,7 @@ public class SecurityConfig {
 
     @Bean
     public LoginSuccessHandler loginSuccessHandler() {
-        return new LoginSuccessHandler(jwtService);
+        return new LoginSuccessHandler(jwtService, memberService);
     }
 
     @Bean
